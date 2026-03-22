@@ -11,7 +11,7 @@ namespace MusicSchoolJournal.Models
         public long Id { get; set; }
 
         [Required]
-        [Column("lesson_id")]  // Изменено с schedule_id
+        [Column("lesson_id")]
         public long LessonId { get; set; }
 
         [Column("description")]
