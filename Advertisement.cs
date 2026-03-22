@@ -25,6 +25,6 @@ namespace MusicSchoolJournal.Models
 
         // Навигационное свойство
         [ForeignKey("AdminId")]
-        public virtual User? Admin { get; set; }  // ЭТО СВОЙСТВО
+        public virtual User? Admin { get; set; } 
     }
 }
