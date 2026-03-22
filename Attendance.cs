@@ -30,7 +30,7 @@ namespace MusicSchoolJournal.Models
         public virtual Lesson? Lesson { get; set; }
 
         [ForeignKey("StudentId")]
-        public virtual User? Student { get; set; }  // ЭТО СВОЙСТВО
+        public virtual User? Student { get; set; } 
 
         [ForeignKey("AbsenceReasonId")]
         public virtual AbsenceReason? AbsenceReason { get; set; }
