@@ -58,8 +58,6 @@ namespace MusicSchoolJournal.Models
         [ForeignKey("RoleId")]
         public virtual Role? Role { get; set; }
 
-        // ===== ДОБАВЛЯЕМ ВСЕ НАВИГАЦИОННЫЕ СВОЙСТВА =====
-
         // Связь с оценками (как ученик)
         public virtual ICollection<Grade> Grades { get; set; } = new List<Grade>();
 
