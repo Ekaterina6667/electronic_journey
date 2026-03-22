@@ -77,7 +77,7 @@ namespace MusicSchoolJournal.Controllers
                     .Include(u => u.Role)
                     .FirstOrDefaultAsync(u => u.Login == model.Login);
 
-                // Проверяем пароль (В РЕАЛЬНОСТИ ХЕШИРУЙТЕ!)
+                // Проверяем пароль
                 if (user != null && user.PasswordHash == model.Password)
                 {
                     // Создаем claims (утверждения о пользователе)
@@ -145,7 +145,7 @@ namespace MusicSchoolJournal.Controllers
 
             if (!string.IsNullOrEmpty(NewPassword))
             {
-                // В реальном проекте здесь должно быть хеширование пароля
+        
                 user.PasswordHash = NewPassword;
             }
 
