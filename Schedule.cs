@@ -51,8 +51,7 @@ namespace MusicSchoolJournal.Models
         public virtual Subject? Subject { get; set; }
 
         [ForeignKey("GroupId")]
-        public virtual Group? Group { get; set; }  // ЭТО СВОЙСТВО НУЖНО
-
+        public virtual Group? Group { get; set; }  
        
     }
 }
