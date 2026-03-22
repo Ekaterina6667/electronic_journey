@@ -10,7 +10,6 @@
         public string QuarterName { get; set; } = string.Empty;
         public List<AcademicQuarter> Quarters { get; set; } = new();
 
-        // НОВОЕ: Выбранный учебный год (для итоговых оценок)
         public int? SelectedAcademicYearId { get; set; }
         public string? AcademicYearName { get; set; }
         public List<AcademicYear> AcademicYears { get; set; } = new();
@@ -50,7 +49,6 @@
         public int GradeCount => GradesByDate.Values.Count(g => g.HasValue);
     }
 
-    // НОВОЕ: Модель для итоговых оценок
     public class SubjectFinalGrades
     {
         public int SubjectId { get; set; }
