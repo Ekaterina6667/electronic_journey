@@ -23,7 +23,7 @@ namespace MusicSchoolJournal.Models
         public int EndYear { get; set; }
 
         [Display(Name = "Учебный год")]
-        [NotMapped]  // Это свойство не хранится в БД
+        [NotMapped]  
         public string Name => $"{StartYear}-{EndYear}";
     }
 }
