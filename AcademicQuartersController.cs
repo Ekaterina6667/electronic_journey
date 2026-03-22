@@ -82,8 +82,6 @@ public async Task<IActionResult> Create(AcademicQuarterViewModel viewModel)
             StartDate = viewModel.StartDate,
             EndDate = viewModel.EndDate
         };
-
-        // 🔹 ДОБАВИТЬ ЭТИ 2 СТРОКИ:
         var adminId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         quarter.CreatedBy = int.Parse(adminId);
 
