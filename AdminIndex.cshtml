@@ -9,7 +9,6 @@
 
 <div class="container-fluid">
     <div class="row">
-        <!-- Левое меню (ТОЧНО КАК НА ГЛАВНОЙ) -->
         <div class="col-md-4 col-lg-3 px-0 bg-light min-vh-100 border-end admin-sidebar">
             <div class="p-3">
                 <div class="text-center mb-3">
@@ -80,9 +79,7 @@
             </div>
         </div>
 
-        <!-- Правая часть (контент) -->
         <div class="col-md-8 col-lg-9 p-4">
-            <!-- Заголовок и кнопка добавления -->
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h1 class="page-title"><i class="fas fa-bullhorn me-2 text-primary"></i>Управление объявлениями</h1>
                 <a asp-action="Create" class="btn btn-primary">
@@ -155,7 +152,6 @@
 }
 
 <style>
-    /* Стили для левой панели администратора - ТОЧНО КАК НА ГЛАВНОЙ */
     .admin-sidebar {
         min-width: 260px;
     }
@@ -254,7 +250,7 @@
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         transition: all 0.3s ease;
         overflow: hidden;
-        background-color: #e9ecef; /* ДОБАВИТЬ эту строку для серого фона всей карточки */
+        background-color: #e9ecef;
     }
 
         .announcement-card:hover {
@@ -265,19 +261,19 @@
 
         .announcement-card .card-header {
             border-bottom: 1px solid #dee2e6;
-            background-color: #e9ecef; /* Серый фон только для шапки */
+            background-color: #e9ecef; 
             padding: 12px 20px;
         }
 
         .announcement-card .card-body {
-            background-color: ##e9ecef; /* Оставить белым для контраста с текстом */
+            background-color: ##e9ecef;
         }
 
         .announcement-card .badge {
             font-weight: normal;
             padding: 4px 10px;
             border-radius: 20px;
-            background-color: #e9ecef; /* Белый фон для бейджа с датой */
+            background-color: #e9ecef; 
         }
 
     .announcements-list {
