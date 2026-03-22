@@ -19,7 +19,6 @@
 
 <div class="container-fluid">
     <div class="row">
-        <!-- Левое меню (ТОЧНО КАК НА ГЛАВНОЙ) -->
         <div class="col-md-4 col-lg-3 px-0 bg-light min-vh-100 border-end admin-sidebar">
             <div class="p-3">
                 <div class="text-center mb-3">
@@ -90,7 +89,6 @@
             </div>
         </div>
 
-        <!-- Правая часть (контент) -->
         <div class="col-md-8 col-lg-9 p-4">
             <!-- Заголовок и кнопки -->
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -116,7 +114,6 @@
                 </div>
             }
 
-            <!-- Вкладки -->
             <ul class="nav nav-tabs mb-4" id="staffTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="teachers-tab" data-bs-toggle="tab" data-bs-target="#teachers" type="button" role="tab" aria-controls="teachers" aria-selected="true">
@@ -130,9 +127,7 @@
                 </li>
             </ul>
 
-            <!-- Содержимое вкладок -->
             <div class="tab-content" id="staffTabsContent">
-                <!-- Вкладка Учителя -->
                 <div class="tab-pane fade show active" id="teachers" role="tabpanel" aria-labelledby="teachers-tab">
                     @if (!Model.Any())
                     {
@@ -198,7 +193,6 @@
                     }
                 </div>
 
-                <!-- Вкладка Завучи -->
                 <div class="tab-pane fade" id="viceprincipals" role="tabpanel" aria-labelledby="viceprincipals-tab">
                     @{
                         var allVicePrincipals = vicePrincipals.ToList();
@@ -228,7 +222,6 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <!-- Сначала показываем текущего администратора -->
                                             @if (currentAdmin != null)
                                             {
                                                 <tr class="table-primary">
@@ -252,7 +245,6 @@
                                                 </tr>
                                             }
 
-                                            <!-- Затем остальных завучей -->
                                             @foreach (var vp in otherVicePrincipals)
                                             {
                                                 <tr>
@@ -301,7 +293,6 @@
 }
 
 <style>
-    /* Стили для левой панели администратора - ТОЧНО КАК НА ГЛАВНОЙ */
     .admin-sidebar {
         min-width: 260px;
     }
@@ -429,7 +420,6 @@
                     color: #0d6efd;
                 }
 
-    /* Выделение текущего пользователя */
     .table-primary {
         background-color: #cfe2ff !important;
     }
