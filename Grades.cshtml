@@ -1,0 +1,1573 @@
+﻿@* @model MusicSchoolJournal.Models.TeacherGradesViewModel
+
+@{
+    ViewData["Title"] = "Оценки";
+    var fullName = Model.TeacherName;
+    var scheduleId = Model.ScheduleId;
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Левое меню (ТОЧНО КАК НА ГЛАВНОЙ) -->
+        <div class="col-md-4 col-lg-3 px-0 bg-light min-vh-100 border-end admin-sidebar">
+            <div class="p-3">
+                <div class="text-center mb-3">
+                    <i class="fas fa-music fa-2x text-primary"></i>
+                    <h5 class="mt-1">Музыкальная школа</h5>
+                    <span class="badge bg-info mt-1 admin-badge">Учитель</span>
+                </div>
+
+                <div class="nav flex-column nav-pills">
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "text-dark")"
+                       asp-controller="Teacher" asp-action="Index">
+                        <i class="fas fa-home me-3"></i>Главная
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["action"]?.ToString() == "Schedule" ? "active" : "text-dark")"
+                       asp-controller="Teacher" asp-action="Schedule">
+                        <i class="fas fa-calendar-alt me-3"></i>Расписание
+                    </a>
+                    <a class="nav-link py-2 active"
+                       asp-controller="Teacher" asp-action="Grades">
+                        <i class="fas fa-star me-3"></i>Оценки
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["action"]?.ToString() == "Homework" ? "active" : "text-dark")"
+                       asp-controller="Teacher" asp-action="Homework">
+                        <i class="fas fa-book me-3"></i>Домашние задания
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["action"]?.ToString() == "TeacherIndex" ? "active" : "text-dark")"
+                       asp-controller="Advertisements" asp-action="TeacherIndex">
+                        <i class="fas fa-bullhorn me-3"></i>Объявления
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["action"]?.ToString() == "Profile" ? "active" : "text-dark")"
+                       asp-controller="Teacher" asp-action="Profile">
+                        <i class="fas fa-user me-3"></i>Личный кабинет
+                    </a>
+                </div>
+
+                <hr class="my-2">
+
+                <div class="user-info mb-2 py-2">
+                    <i class="fas fa-user-circle me-2 text-primary"></i>
+                    <span class="fw-bold small">@fullName</span>
+                </div>
+
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    <button type="submit" class="btn btn-outline-danger w-100 py-2">
+                        <i class="fas fa-sign-out-alt me-2"></i>Выйти
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Правая часть (контент) -->
+        <div class="col-md-8 col-lg-9 p-4">
+            <!-- Заголовок и фильтры -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-star me-2 text-primary"></i>Оценки</h2>
+                <div class="text-muted">
+                    <i class="fas fa-calendar me-2"></i>@DateTime.Now.ToString("dd MMMM yyyy")
+                </div>
+            </div>
+
+            <!-- Фильтры -->
+            <div class="card card-gray mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="fas fa-filter me-2 text-primary"></i>Фильтры</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Группа</label>
+                            <select name="groupId" class="form-select" onchange="this.form.submit()">
+                                @foreach (var group in Model.Groups)
+                                {
+                                    <option value="@group.Id" selected="@(group.Id == Model.SelectedGroupId)">
+                                        @group.GroupName
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Предмет</label>
+                            <select name="subjectId" class="form-select" onchange="this.form.submit()">
+                                @foreach (var subject in Model.Subjects)
+                                {
+                                    <option value="@subject.Id" selected="@(subject.Id == Model.SelectedSubjectId)">
+                                        @subject.SubjectName
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Четверть</label>
+                            <select name="quarterId" class="form-select" onchange="this.form.submit()">
+                                @foreach (var quarter in Model.Quarters)
+                                {
+                                    <option value="@quarter.Id" selected="@(quarter.Id == Model.SelectedQuarterId)">
+                                        @quarter.Name
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            @if (Model.StudentGrades.Any() && Model.Dates.Any())
+            {
+                <!-- Информация о выбранных фильтрах -->
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>@Model.GroupName</strong> - <strong>@Model.SubjectName</strong> - <strong>@Model.QuarterName</strong>
+                </div>
+
+                <!-- Таблица оценок -->
+                <div class="card card-gray">
+                    <div class="card-body p-0">
+                        <div class="table-wrapper" style="position: relative; overflow-x: auto;">
+                            <table class="table table-bordered grades-table mb-0" style="min-width: 100%; border-collapse: separate; border-spacing: 0;">
+                                <thead>
+                                    <tr>
+                                        <th class="sticky-col" style="min-width: 200px; background-color: #f8f9fa; position: sticky; left: 0; z-index: 20; border-right: 2px solid #dee2e6;">Ученик</th>
+                                        <th class="sticky-col-2" style="min-width: 80px; background-color: #f8f9fa; position: sticky; left: 200px; z-index: 20; border-right: 2px solid #dee2e6;">Ср. балл</th>
+                                        @foreach (var date in Model.Dates)
+                                        {
+                                            <th class="text-center date-column" style="min-width: 100px; background-color: #f8f9fa;">
+                                                <div>@date.ToString("dd.MM")</div>
+                                                <small class="text-muted">@date.ToString("ddd")</small>
+                                            </th>
+                                        }
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var student in Model.StudentGrades)
+                                    {
+                                        <tr>
+                                            <td class="fw-bold sticky-col" style="position: sticky; left: 0; background-color: white; z-index: 10; border-right: 2px solid #dee2e6;">@student.StudentName</td>
+                                            <td class="sticky-col-2 text-center fw-bold @(student.AverageGrade >= 4 ? "text-success" : student.AverageGrade >= 3 ? "text-warning" : "text-danger")"
+                                                style="position: sticky; left: 200px; background-color: white; z-index: 10; border-right: 2px solid #dee2e6;">
+                                                @student.AverageGrade
+                                            </td>
+                                            @foreach (var date in Model.Dates)
+                                            {
+                                                var grades = student.AllGradesByDate.ContainsKey(date) ? student.AllGradesByDate[date] : new List<int>();
+                                                <td class="text-center grade-cell" data-student="@student.StudentId" data-date="@date.ToString("yyyy-MM-dd")">
+                                                    @if (grades.Any())
+                                                    {
+                                                        <div class="multiple-grades">
+                                                            @foreach (var grade in grades)
+                                                            {
+                                                                <span class="grade-value @(grade >= 4 ? "grade-good" : grade >= 3 ? "grade-ok" : "grade-bad") editable-grade me-1"
+                                                                      onclick="editGrade(this, @student.StudentId, '@date.ToString("yyyy-MM-dd")', @grade)">
+                                                                    @grade
+                                                                </span>
+                                                            }
+                                                            <span class="grade-value grade-empty editable-grade"
+                                                                  onclick="editGrade(this, @student.StudentId, '@date.ToString("yyyy-MM-dd")', null)">
+                                                                +
+                                                            </span>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="grade-value grade-empty editable-grade"
+                                                              onclick="editGrade(this, @student.StudentId, '@date.ToString("yyyy-MM-dd")', null)">
+                                                            +
+                                                        </span>
+                                                    }
+                                                </td>
+                                            }
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Легенда -->
+                <div class="mt-3 d-flex flex-wrap gap-3">
+                    <div><span class="badge bg-success">5, 4</span> - хорошие оценки</div>
+                    <div><span class="badge bg-warning">3</span> - удовлетворительно</div>
+                    <div><span class="badge bg-danger">2</span> - плохо</div>
+                    <div><span class="badge bg-secondary">+</span> - поставить оценку</div>
+                </div>
+            }
+            else if (!Model.Groups.Any() || !Model.Subjects.Any())
+            {
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    У вас нет назначенных групп или предметов
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    В выбранной четверти нет занятий
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для ввода оценки -->
+<div class="modal fade" id="gradeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-star me-2 text-primary"></i>Ввод оценки
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="currentStudentId" />
+                <input type="hidden" id="currentDate" />
+                <div class="mb-3">
+                    <label class="form-label">Оценка</label>
+                    <select id="gradeSelect" class="form-select">
+                        <option value="">-- Выберите оценку --</option>
+                        <option value="5">5 (Отлично)</option>
+                        <option value="4">4 (Хорошо)</option>
+                        <option value="3">3 (Удовлетворительно)</option>
+                        <option value="2">2 (Неудовлетворительно)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="saveGrade()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentElement;
+        let currentStudentId;
+        let currentDateStr;
+
+        function editGrade(element, studentId, dateStr, currentGrade) {
+            currentElement = element;
+            currentStudentId = studentId;
+            currentDateStr = dateStr;
+
+            document.getElementById('currentStudentId').value = studentId;
+            document.getElementById('currentDate').value = dateStr;
+
+            if (currentGrade) {
+                document.getElementById('gradeSelect').value = currentGrade;
+            } else {
+                document.getElementById('gradeSelect').value = '';
+            }
+
+            var modal = new bootstrap.Modal(document.getElementById('gradeModal'));
+            modal.show();
+        }
+        function getAntiForgeryToken() {
+            var token = document.querySelector('input[name="__RequestVerificationToken"]');
+            return token ? token.value : '';
+        }
+
+        function saveGrade() {
+            var studentId = currentStudentId;
+            var dateStr = currentDateStr;
+            var gradeValue = document.getElementById('gradeSelect').value;
+
+            if (!gradeValue) {
+                alert('Выберите оценку');
+                return;
+            }
+
+            var scheduleId = @scheduleId;
+
+            console.log('Сохранение оценки:', {
+                studentId: studentId,
+                dateStr: dateStr,
+                gradeValue: gradeValue,
+                scheduleId: scheduleId
+            });
+
+            // Сначала получаем или создаем lessonId
+            fetch('/Teacher/GetOrCreateLesson?scheduleId=' + scheduleId + '&date=' + encodeURIComponent(dateStr), {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Получен lessonId:', data);
+
+                    if (!data.success) {
+                        throw new Error(data.message || 'Ошибка при создании занятия');
+                    }
+
+                    var formData = new URLSearchParams();
+                    formData.append('studentId', studentId);
+                    formData.append('lessonId', data.lessonId);
+                    formData.append('gradeValue', gradeValue);
+                    formData.append('__RequestVerificationToken', getAntiForgeryToken());
+
+                    // Сохраняем оценку
+                    return fetch('/Teacher/SaveGrade', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: formData.toString()
+                    });
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Результат сохранения:', data);
+
+                    if (data.success) {
+                        if (currentElement) {
+                            currentElement.innerText = gradeValue;
+                            currentElement.className = 'grade-value ' + getGradeClass(gradeValue) + ' editable-grade';
+                        }
+
+                        var modal = bootstrap.Modal.getInstance(document.getElementById('gradeModal'));
+                        modal.hide();
+
+                        alert('Оценка успешно сохранена');
+                        location.reload();
+                    } else {
+                        alert('Ошибка: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Произошла ошибка при сохранении: ' + error.message);
+                });
+        }
+        function getGradeClass(grade) {
+            grade = parseInt(grade);
+            if (grade >= 4) return 'grade-good';
+            if (grade >= 3) return 'grade-ok';
+            return 'grade-bad';
+        }
+    </script>
+}
+
+<style>
+    /* Стили для левой панели учителя - ТОЧНО КАК НА ГЛАВНОЙ */
+    .admin-sidebar {
+        min-width: 260px;
+    }
+
+        .admin-sidebar .nav-link {
+            border-radius: 8px;
+            margin-bottom: 2px;
+            transition: all 0.2s;
+            white-space: nowrap;
+            padding: 8px 12px;
+            font-size: 0.95rem;
+        }
+
+            .admin-sidebar .nav-link i {
+                width: 22px;
+                text-align: center;
+                font-size: 1rem;
+            }
+
+            .admin-sidebar .nav-link:hover:not(.active) {
+                background-color: #e9ecef;
+            }
+
+            .admin-sidebar .nav-link.active {
+                background-color: #0d6efd;
+                color: white !important;
+            }
+
+    .admin-badge {
+        font-size: 0.8rem !important;
+        padding: 4px 8px !important;
+        display: inline-block;
+    }
+
+    .user-info {
+        font-size: 0.9rem;
+        padding: 8px 10px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border-left: 3px solid #0d6efd;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .min-vh-100 {
+        min-height: 100vh;
+    }
+
+    /* Уменьшенные отступы - КАК НА ГЛАВНОЙ */
+    .py-2 {
+        padding-top: 0.4rem !important;
+        padding-bottom: 0.4rem !important;
+    }
+
+    .my-2 {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    .mb-2 {
+        margin-bottom: 0.5rem !important;
+    }
+
+    .mb-3 {
+        margin-bottom: 0.8rem !important;
+    }
+
+    hr {
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.3;
+    }
+
+    /* Серый фон для карточек */
+    .card-gray {
+        background-color: #e9ecef !important;
+        border: none;
+        border-radius: 12px;
+    }
+
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .card-header {
+        background-color: white;
+        border-bottom: 1px solid #dee2e6;
+        padding: 15px 20px;
+    }
+
+    /* Стили для таблицы оценок */
+    .grades-table {
+        font-size: 0.9rem;
+    }
+
+        .grades-table th {
+            background-color: #f8f9fa;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .grades-table td {
+            vertical-align: middle;
+        }
+
+    .date-column {
+        writing-mode: horizontal-tb;
+    }
+
+    .grade-cell {
+        padding: 8px 5px !important;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .grade-value {
+        display: inline-block;
+        width: 35px;
+        height: 35px;
+        line-height: 35px;
+        border-radius: 50%;
+        font-weight: bold;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+        .grade-value:hover {
+            transform: scale(1.1);
+        }
+
+    .grade-good {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .grade-ok {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .grade-bad {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .grade-empty {
+        background-color: #e9ecef;
+        color: #6c757d;
+        border: 1px dashed #adb5bd;
+    }
+
+    .sticky-top {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Стили для фильтров */
+    .form-select {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 8px 12px;
+    }
+
+        .form-select:focus {
+            border-color: #4361ee;
+            box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+        }
+
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+    }
+
+    /* Размеры колонок */
+    .col-md-4 {
+        flex: 0 0 auto;
+        width: 33.33333333%;
+    }
+
+    .col-lg-3 {
+        flex: 0 0 auto;
+        width: 25%;
+    }
+
+    .col-md-8 {
+        flex: 0 0 auto;
+        width: 66.66666667%;
+    }
+
+    .col-lg-9 {
+        flex: 0 0 auto;
+        width: 75%;
+    }
+    /* Стили для закрепленных столбцов */
+    .sticky-col {
+        position: sticky;
+        left: 0;
+        background-color: white;
+        z-index: 10;
+        border-right: 2px solid #dee2e6;
+        box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);
+    }
+
+    .sticky-col-2 {
+        position: sticky;
+        left: 200px; /* Ширина первого столбца */
+        background-color: white;
+        z-index: 10;
+        border-right: 2px solid #dee2e6;
+        box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);
+    }
+
+    /* Стили для заголовков */
+    thead .sticky-col,
+    thead .sticky-col-2 {
+        background-color: #f8f9fa !important;
+        z-index: 20;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    /* Контейнер для таблицы с прокруткой */
+    .table-wrapper {
+        max-height: 600px;
+        overflow-x: auto;
+        overflow-y: auto;
+        border-radius: 8px;
+    }
+
+    /* Стили для ячеек с несколькими оценками */
+    .multiple-grades {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        justify-content: center;
+    }
+
+        .multiple-grades .grade-value {
+            margin: 1px;
+        }
+</style> *@
+@model MusicSchoolJournal.Models.TeacherGradesViewModel
+
+@{
+    ViewData["Title"] = "Оценки";
+    var fullName = Model.TeacherName;
+    var scheduleId = Model.ScheduleId;
+    var showCurrent = Model.ShowCurrentGrades;
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Левое меню -->
+        <div class="col-md-4 col-lg-3 px-0 bg-light min-vh-100 border-end admin-sidebar">
+            <div class="p-3">
+                <div class="text-center mb-3">
+                    <i class="fas fa-music fa-2x text-primary"></i>
+                    <h5 class="mt-1">Музыкальная школа</h5>
+                    <span class="badge bg-info mt-1 admin-badge">Учитель</span>
+                </div>
+
+                <div class="nav flex-column nav-pills">
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "text-dark")"
+                       asp-controller="Teacher" asp-action="Index">
+                        <i class="fas fa-home me-3"></i>Главная
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["action"]?.ToString() == "Schedule" ? "active" : "text-dark")"
+                       asp-controller="Teacher" asp-action="Schedule">
+                        <i class="fas fa-calendar-alt me-3"></i>Расписание
+                    </a>
+                    <a class="nav-link py-2 active"
+                       asp-controller="Teacher" asp-action="Grades">
+                        <i class="fas fa-star me-3"></i>Оценки
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["action"]?.ToString() == "Homework" ? "active" : "text-dark")"
+                       asp-controller="Teacher" asp-action="Homework">
+                        <i class="fas fa-book me-3"></i>Домашние задания
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["action"]?.ToString() == "TeacherIndex" ? "active" : "text-dark")"
+                       asp-controller="Advertisements" asp-action="TeacherIndex">
+                        <i class="fas fa-bullhorn me-3"></i>Объявления
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["action"]?.ToString() == "Profile" ? "active" : "text-dark")"
+                       asp-controller="Teacher" asp-action="Profile">
+                        <i class="fas fa-user me-3"></i>Личный кабинет
+                    </a>
+                </div>
+
+                <hr class="my-2">
+
+                <div class="user-info mb-2 py-2">
+                    <i class="fas fa-user-circle me-2 text-primary"></i>
+                    <span class="fw-bold small">@fullName</span>
+                </div>
+
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    <button type="submit" class="btn btn-outline-danger w-100 py-2">
+                        <i class="fas fa-sign-out-alt me-2"></i>Выйти
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Правая часть (контент) -->
+        <div class="col-md-8 col-lg-9 p-4">
+            <!-- Заголовок и дата -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-star me-2 text-primary"></i>Оценки</h2>
+                <div class="text-muted">
+                    <i class="fas fa-calendar me-2"></i>@DateTime.Now.ToString("dd MMMM yyyy")
+                </div>
+            </div>
+
+            <!-- Вкладки -->
+            <ul class="nav nav-tabs mb-4">
+                <li class="nav-item">
+                    <a class="nav-link @(Model.ShowCurrentGrades ? "active" : "")"
+                       asp-action="Grades"
+                       asp-route-showCurrent="true"
+                       asp-route-groupId="@Model.SelectedGroupId"
+                       asp-route-subjectId="@Model.SelectedSubjectId"
+                       asp-route-quarterId="@Model.SelectedQuarterId">
+                        <i class="fas fa-edit me-2"></i>Текущие оценки
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(!Model.ShowCurrentGrades ? "active" : "")"
+                       asp-action="Grades"
+                       asp-route-showCurrent="false"
+                       asp-route-groupId="@Model.SelectedGroupId"
+                       asp-route-subjectId="@Model.SelectedSubjectId"
+                       asp-route-academicYearId="@Model.SelectedAcademicYearId">
+                        <i class="fas fa-chart-line me-2"></i>Итоговые оценки
+                    </a>
+                </li>
+            </ul>
+
+            @if (Model.ShowCurrentGrades)
+            {
+                <!-- ВКЛАДКА 1: Текущие оценки -->
+                <!-- Фильтры для текущих оценок -->
+                <div class="card card-gray mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="fas fa-filter me-2 text-primary"></i>Фильтры</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="get" class="row g-3">
+                            <input type="hidden" name="showCurrent" value="true" />
+                            <div class="col-md-4">
+                                <label class="form-label">Группа</label>
+                                <select name="groupId" class="form-select" onchange="this.form.submit()">
+                                    @foreach (var group in Model.Groups)
+                                    {
+                                        <option value="@group.Id" selected="@(group.Id == Model.SelectedGroupId)">
+                                            @group.GroupName
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Предмет</label>
+                                <select name="subjectId" class="form-select" onchange="this.form.submit()">
+                                    @foreach (var subject in Model.Subjects)
+                                    {
+                                        <option value="@subject.Id" selected="@(subject.Id == Model.SelectedSubjectId)">
+                                            @subject.SubjectName
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Четверть</label>
+                                <select name="quarterId" class="form-select" onchange="this.form.submit()">
+                                    @foreach (var quarter in Model.Quarters)
+                                    {
+                                        <option value="@quarter.Id" selected="@(quarter.Id == Model.SelectedQuarterId)">
+                                            @quarter.Name
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                @if (Model.StudentGrades.Any() && Model.Dates.Any())
+                {
+                    <!-- Информация о выбранных фильтрах -->
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>@Model.GroupName</strong> - <strong>@Model.SubjectName</strong> - <strong>@Model.QuarterName</strong>
+                    </div>
+
+                    <!-- Таблица текущих оценок -->
+                    <div class="card card-gray">
+                        <div class="card-body p-0">
+                            <div class="table-wrapper" style="position: relative; overflow-x: auto;">
+                                <table class="table table-bordered grades-table mb-0" style="min-width: 100%; border-collapse: separate; border-spacing: 0;">
+                                    <thead>
+                                        <tr>
+                                            <th class="sticky-col" style="min-width: 200px; background-color: #f8f9fa; position: sticky; left: 0; z-index: 20; border-right: 2px solid #dee2e6;">Ученик</th>
+                                            <th class="sticky-col-2" style="min-width: 80px; background-color: #f8f9fa; position: sticky; left: 200px; z-index: 20; border-right: 2px solid #dee2e6;">Ср. балл</th>
+                                            @foreach (var date in Model.Dates)
+                                            {
+                                                <th class="text-center date-column" style="min-width: 100px; background-color: #f8f9fa;">
+                                                    <div>@date.ToString("dd.MM")</div>
+                                                    <small class="text-muted">@date.ToString("ddd")</small>
+                                                </th>
+                                            }
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var student in Model.StudentGrades)
+                                        {
+                                            <tr>
+                                                <td class="fw-bold sticky-col" style="position: sticky; left: 0; background-color: white; z-index: 10; border-right: 2px solid #dee2e6;">@student.StudentName</td>
+                                                <td class="sticky-col-2 text-center fw-bold @(student.AverageGrade >= 4 ? "text-success" : student.AverageGrade >= 3 ? "text-warning" : "text-danger")"
+                                                    style="position: sticky; left: 200px; background-color: white; z-index: 10; border-right: 2px solid #dee2e6;">
+                                                    @student.AverageGrade.ToString("F2")
+                                                </td>
+                                                @foreach (var date in Model.Dates)
+                                                {
+                                                    var grades = student.AllGradesByDate.ContainsKey(date) ? student.AllGradesByDate[date] : new List<int>();
+                                                    <td class="text-center grade-cell" data-student="@student.StudentId" data-date="@date.ToString("yyyy-MM-dd")">
+                                                        @if (grades.Any())
+                                                        {
+                                                            <div class="multiple-grades">
+                                                                @foreach (var grade in grades)
+                                                                {
+                                                                    <span class="grade-value @(grade >= 4 ? "grade-good" : grade >= 3 ? "grade-ok" : "grade-bad") editable-grade me-1"
+                                                                          onclick="editGrade(this, @student.StudentId, '@date.ToString("yyyy-MM-dd")', @grade)">
+                                                                        @grade
+                                                                    </span>
+                                                                }
+                                                                <span class="grade-value grade-empty editable-grade"
+                                                                      onclick="editGrade(this, @student.StudentId, '@date.ToString("yyyy-MM-dd")', null)">
+                                                                    +
+                                                                </span>
+                                                            </div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="grade-value grade-empty editable-grade"
+                                                                  onclick="editGrade(this, @student.StudentId, '@date.ToString("yyyy-MM-dd")', null)">
+                                                                +
+                                                            </span>
+                                                        }
+                                                    </td>
+                                                }
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Легенда -->
+                    <div class="mt-3 d-flex flex-wrap gap-3">
+                        <div><span class="badge bg-success">5, 4</span> - хорошие оценки</div>
+                        <div><span class="badge bg-warning">3</span> - удовлетворительно</div>
+                        <div><span class="badge bg-danger">2</span> - плохо</div>
+                        <div><span class="badge bg-secondary">+</span> - поставить оценку</div>
+                    </div>
+                }
+                else if (!Model.Groups.Any() || !Model.Subjects.Any())
+                {
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        У вас нет назначенных групп или предметов
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        В выбранной четверти нет занятий
+                    </div>
+                }
+            }
+            else
+{
+    <!-- ВКЛАДКА 2: Итоговые оценки -->
+    <!-- Фильтры для итоговых оценок -->
+    <div class="card card-gray mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="fas fa-filter me-2 text-primary"></i>Фильтры</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <input type="hidden" name="showCurrent" value="false" />
+                <div class="col-md-4">
+                    <label class="form-label">Группа</label>
+                    <select name="groupId" class="form-select" onchange="this.form.submit()">
+                        @foreach (var group in Model.Groups)
+                        {
+                            <option value="@group.Id" selected="@(group.Id == Model.SelectedGroupId)">
+                                @group.GroupName
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Предмет</label>
+                    <select name="subjectId" class="form-select" onchange="this.form.submit()">
+                        @foreach (var subject in Model.Subjects)
+                        {
+                            <option value="@subject.Id" selected="@(subject.Id == Model.SelectedSubjectId)">
+                                @subject.SubjectName
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Учебный год</label>
+                    <select name="academicYearId" class="form-select" onchange="this.form.submit()">
+                        @foreach (var year in Model.AcademicYears)
+                        {
+                            <option value="@year.Id" selected="@(year.Id == Model.SelectedAcademicYearId)">
+                                @year.Name
+                            </option>
+                        }
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (Model.FinalGrades != null && Model.FinalGrades.Any())
+    {
+        <!-- Информация о выбранных фильтрах -->
+        <div class="alert alert-info mb-4">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>@Model.GroupName</strong> - <strong>@Model.SubjectName</strong> - <strong>@Model.AcademicYearName</strong>
+        </div>
+
+        <!-- Таблица итоговых оценок -->
+        <div class="card card-gray">
+            <div class="card-body p-0">
+                <div class="table-wrapper" style="overflow-x: auto;">
+                    <table class="table table-bordered grades-table mb-0">
+                        <thead>
+                            <tr>
+                                <th style="min-width: 250px;">Ученик</th>
+                                @{
+                                    // Получаем четверти, отсортированные по дате (от 1-й до 4-й)
+                                    var sortedQuarters = Model.Quarters
+                                        .Where(q => q.StartDate.Year >= (Model.SelectedAcademicYearId.HasValue ? 
+                                            Model.AcademicYears.FirstOrDefault(y => y.Id == Model.SelectedAcademicYearId)?.StartYear ?? 0 : 0))
+                                        .OrderBy(q => q.StartDate)
+                                        .ToList();
+                                }
+                                @foreach (var quarter in sortedQuarters)
+                                {
+                                    <th class="text-center" style="min-width: 100px;">
+                                        <div>@quarter.Name</div>
+                                        <small class="text-muted">@quarter.StartDate.ToString("dd.MM")-@quarter.EndDate.ToString("dd.MM")</small>
+                                    </th>
+                                }
+                                <th class="text-center" style="min-width: 80px;">Год</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var student in Model.FinalGrades)
+                            {
+                                // Проверяем, все ли четверти заполнены у ученика
+                                var allQuartersHaveGrades = student.QuarterGrades.Values.All(g => g.HasValue);
+                                
+                                <tr>
+                                    <td class="fw-bold">@student.StudentName</td>
+                                    @foreach (var quarter in sortedQuarters)
+                                    {
+                                        var grade = student.QuarterGrades.ContainsKey(quarter.Id) ? student.QuarterGrades[quarter.Id] : null;
+                                        var isCompleted = student.QuarterCompleted.ContainsKey(quarter.Id) && student.QuarterCompleted[quarter.Id];
+                                        
+                                        <td class="text-center">
+                                            @if (grade.HasValue)
+                                            {
+                                                <span class="grade-value @(grade >= 4 ? "grade-good" : grade >= 3 ? "grade-ok" : "grade-bad") 
+                                                       @(isCompleted ? "" : "grade-pending")"
+                                                      title="@(isCompleted ? "Четверть завершена" : "Четверть в процессе")">
+                                                    @grade.Value.ToString("F1")
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="grade-value grade-empty" title="Нет оценок">-</span>
+                                            }
+                                        </td>
+                                    }
+                                    <td class="text-center">
+                                        @if (student.YearGrade.HasValue)
+                                        {
+                                            <span class="grade-value @(student.YearGrade >= 4 ? "grade-good" : student.YearGrade >= 3 ? "grade-ok" : "grade-bad")
+                                                   @(allQuartersHaveGrades ? "" : "grade-pending")"
+                                                  title="@(allQuartersHaveGrades ? "Все четверти заполнены" : "Не все четверти заполнены")">
+                                                @student.YearGrade.Value.ToString("F1")
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="grade-value grade-empty">-</span>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Легенда для итоговых оценок -->
+        <div class="mt-3 d-flex flex-wrap gap-3">
+            <div><span class="badge bg-success">5, 4</span> - хорошие оценки</div>
+            <div><span class="badge bg-warning">3</span> - удовлетворительно</div>
+            <div><span class="badge bg-danger">2</span> - плохо</div>
+            <div><span class="badge bg-secondary opacity-50">серая</span> - четверть не завершена / не все четверти заполнены</div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Нет данных для отображения итоговых оценок
+        </div>
+    }
+}
+        </div>
+    </div>
+</div>
+<!-- Модальные окна для работы с оценками (ДОЛЖНЫ БЫТЬ ЗДЕСЬ, вне всех блоков) -->
+<!-- Модальное окно для выбора действия с оценкой -->
+<div class="modal fade" id="gradeActionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2 text-primary"></i>Действие с оценкой
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p class="mb-3">Текущая оценка: <strong id="currentGradeValueDisplay"></strong></p>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-primary" onclick="showEditModal()">
+                        <i class="fas fa-pen me-2"></i>Редактировать
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                        <i class="fas fa-trash me-2"></i>Удалить
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Отмена
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для редактирования оценки -->
+<div class="modal fade" id="editGradeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-star me-2 text-primary"></i>Редактирование оценки
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editStudentId" />
+                <input type="hidden" id="editDate" />
+                <input type="hidden" id="editGradeId" />
+                <div class="mb-3">
+                    <label class="form-label">Оценка</label>
+                    <select id="editGradeSelect" class="form-select">
+                        <option value="5">5 (Отлично)</option>
+                        <option value="4">4 (Хорошо)</option>
+                        <option value="3">3 (Удовлетворительно)</option>
+                        <option value="2">2 (Неудовлетворительно)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="updateGrade()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для подтверждения удаления -->
+<div class="modal fade" id="deleteGradeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2 text-danger"></i>Подтверждение
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p>Вы уверены, что хотите удалить эту оценку?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" onclick="deleteGrade()">Удалить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для ввода оценки (только для текущих оценок) -->
+@if (Model.ShowCurrentGrades)
+{
+    <div class="modal fade" id="gradeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-star me-2 text-primary"></i>Ввод оценки
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="currentStudentId" />
+                    <input type="hidden" id="currentDate" />
+                    <div class="mb-3">
+                        <label class="form-label">Оценка</label>
+                        <select id="gradeSelect" class="form-select">
+                            <option value="">-- Выберите оценку --</option>
+                            <option value="5">5 (Отлично)</option>
+                            <option value="4">4 (Хорошо)</option>
+                            <option value="3">3 (Удовлетворительно)</option>
+                            <option value="2">2 (Неудовлетворительно)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="saveGrade()">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<!-- Модальное окно для ввода оценки (только для текущих оценок) -->
+@if (Model.ShowCurrentGrades)
+{
+    <div class="modal fade" id="gradeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-star me-2 text-primary"></i>Ввод оценки
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="currentStudentId" />
+                    <input type="hidden" id="currentDate" />
+                    <div class="mb-3">
+                        <label class="form-label">Оценка</label>
+                        <select id="gradeSelect" class="form-select">
+                            <option value="">-- Выберите оценку --</option>
+                            <option value="5">5 (Отлично)</option>
+                            <option value="4">4 (Хорошо)</option>
+                            <option value="3">3 (Удовлетворительно)</option>
+                            <option value="2">2 (Неудовлетворительно)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="saveGrade()">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Обновленный JavaScript код
+        let currentElement;
+        let currentStudentId;
+        let currentDateStr;
+        let currentGradeId;
+        let currentGradeValue;
+        function editGrade(element, studentId, dateStr, currentGrade) {
+            currentElement = element;
+            currentStudentId = studentId;
+            currentDateStr = dateStr;
+            currentGradeValue = currentGrade;
+
+            if (currentGrade) {
+                // Существующая оценка - показываем меню действий
+                document.getElementById('currentGradeValueDisplay').innerText = currentGrade;
+                var actionModal = new bootstrap.Modal(document.getElementById('gradeActionModal'));
+                actionModal.show();
+            } else {
+                // Новая оценка - показываем окно ввода
+                document.getElementById('currentStudentId').value = studentId;
+                document.getElementById('currentDate').value = dateStr;
+                document.getElementById('gradeSelect').value = '';
+
+                var modal = new bootstrap.Modal(document.getElementById('gradeModal'));
+                modal.show();
+            }
+        }
+        function showEditModal() {
+            // Закрываем окно выбора действия
+            bootstrap.Modal.getInstance(document.getElementById('gradeActionModal')).hide();
+
+            // Показываем окно редактирования
+            var editModal = new bootstrap.Modal(document.getElementById('editGradeModal'));
+            editModal.show();
+        }
+
+        function confirmDelete() {
+            // Закрываем окно выбора действия
+            bootstrap.Modal.getInstance(document.getElementById('gradeActionModal')).hide();
+
+            // Показываем окно подтверждения удаления
+            var deleteModal = new bootstrap.Modal(document.getElementById('deleteGradeModal'));
+            deleteModal.show();
+        }
+
+        function updateGrade() {
+            alert('Функция редактирования временно недоступна');
+            bootstrap.Modal.getInstance(document.getElementById('editGradeModal')).hide();
+        }
+
+        function deleteGrade() {
+            alert('Функция удаления временно недоступна');
+            bootstrap.Modal.getInstance(document.getElementById('deleteGradeModal')).hide();
+        }
+        function showEditModal() {
+            bootstrap.Modal.getInstance(document.getElementById('gradeActionModal')).hide();
+
+            document.getElementById('editStudentId').value = currentStudentId;
+            document.getElementById('editDate').value = currentDateStr;
+            document.getElementById('editGradeId').value = currentGradeId;
+            document.getElementById('editGradeSelect').value = currentGradeValue;
+
+            var editModal = new bootstrap.Modal(document.getElementById('editGradeModal'));
+            editModal.show();
+        }
+
+        function confirmDelete() {
+            bootstrap.Modal.getInstance(document.getElementById('gradeActionModal')).hide();
+            var deleteModal = new bootstrap.Modal(document.getElementById('deleteGradeModal'));
+            deleteModal.show();
+        }
+
+        function getAntiForgeryToken() {
+            var token = document.querySelector('input[name="__RequestVerificationToken"]');
+            return token ? token.value : '';
+        }
+
+        function saveGrade() {
+            // ... существующий код saveGrade ...
+        }
+
+        function updateGrade() {
+            var gradeId = document.getElementById('editGradeId').value;
+            var gradeValue = document.getElementById('editGradeSelect').value;
+
+            if (!gradeValue) {
+                alert('Выберите оценку');
+                return;
+            }
+
+            var formData = new URLSearchParams();
+            formData.append('gradeId', gradeId);
+            formData.append('gradeValue', gradeValue);
+            formData.append('__RequestVerificationToken', getAntiForgeryToken());
+
+            fetch('/Teacher/UpdateGrade', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData.toString()
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (currentElement) {
+                            currentElement.innerText = gradeValue;
+                            currentElement.className = 'grade-value ' + getGradeClass(gradeValue) + ' editable-grade';
+                        }
+
+                        bootstrap.Modal.getInstance(document.getElementById('editGradeModal')).hide();
+                        alert('Оценка успешно обновлена');
+                        location.reload();
+                    } else {
+                        alert('Ошибка: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Произошла ошибка при обновлении');
+                });
+        }
+
+        function deleteGrade() {
+            var gradeId = currentGradeId;
+
+            var formData = new URLSearchParams();
+            formData.append('gradeId', gradeId);
+            formData.append('__RequestVerificationToken', getAntiForgeryToken());
+
+            fetch('/Teacher/DeleteGrade', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData.toString()
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        bootstrap.Modal.getInstance(document.getElementById('deleteGradeModal')).hide();
+
+                        if (currentElement) {
+                            var cell = currentElement.closest('.grade-cell');
+                            cell.innerHTML = '<span class="grade-value grade-empty editable-grade" onclick="editGrade(this, ' + currentStudentId + ', \'' + currentDateStr + '\', null)">+</span>';
+                        }
+
+                        alert('Оценка успешно удалена');
+                    } else {
+                        alert('Ошибка: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Произошла ошибка при удалении');
+                });
+        }
+
+        function getGradeClass(grade) {
+            grade = parseInt(grade);
+            if (grade >= 4) return 'grade-good';
+            if (grade >= 3) return 'grade-ok';
+            return 'grade-bad';
+        }
+    </script>
+}
+
+<style>
+    /* Стили для левой панели */
+    .admin-sidebar {
+        min-width: 260px;
+    }
+
+        .admin-sidebar .nav-link {
+            border-radius: 8px;
+            margin-bottom: 2px;
+            transition: all 0.2s;
+            white-space: nowrap;
+            padding: 8px 12px;
+            font-size: 0.95rem;
+        }
+
+            .admin-sidebar .nav-link i {
+                width: 22px;
+                text-align: center;
+                font-size: 1rem;
+            }
+
+            .admin-sidebar .nav-link:hover:not(.active) {
+                background-color: #e9ecef;
+            }
+
+            .admin-sidebar .nav-link.active {
+                background-color: #0d6efd;
+                color: white !important;
+            }
+
+    .admin-badge {
+        font-size: 0.8rem !important;
+        padding: 4px 8px !important;
+        display: inline-block;
+    }
+
+    .user-info {
+        font-size: 0.9rem;
+        padding: 8px 10px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border-left: 3px solid #0d6efd;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .min-vh-100 {
+        min-height: 100vh;
+    }
+
+    /* Уменьшенные отступы */
+    .py-2 {
+        padding-top: 0.4rem !important;
+        padding-bottom: 0.4rem !important;
+    }
+
+    .my-2 {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    .mb-2 {
+        margin-bottom: 0.5rem !important;
+    }
+
+    .mb-3 {
+        margin-bottom: 0.8rem !important;
+    }
+
+    hr {
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.3;
+    }
+
+    /* Серый фон для карточек */
+    .card-gray {
+        background-color: #e9ecef !important;
+        border: none;
+        border-radius: 12px;
+    }
+
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .card-header {
+        background-color: white;
+        border-bottom: 1px solid #dee2e6;
+        padding: 15px 20px;
+    }
+
+    /* Стили для таблицы оценок */
+    .grades-table {
+        font-size: 0.9rem;
+    }
+
+        .grades-table th {
+            background-color: #f8f9fa;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .grades-table td {
+            vertical-align: middle;
+        }
+
+    .date-column {
+        writing-mode: horizontal-tb;
+    }
+
+    .grade-cell {
+        padding: 8px 5px !important;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .grade-value {
+        display: inline-block;
+        width: 35px;
+        height: 35px;
+        line-height: 35px;
+        border-radius: 50%;
+        font-weight: bold;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+        .grade-value:hover {
+            transform: scale(1.1);
+        }
+
+    .grade-good {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .grade-ok {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .grade-bad {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .grade-empty {
+        background-color: #e9ecef;
+        color: #6c757d;
+        border: 1px dashed #adb5bd;
+    }
+
+    .grade-pending {
+        opacity: 0.6;
+        border: 2px dashed #6c757d;
+    }
+
+    /* Стили для фильтров */
+    .form-select {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 8px 12px;
+    }
+
+        .form-select:focus {
+            border-color: #4361ee;
+            box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+        }
+
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+    }
+
+    /* Стили для закрепленных столбцов */
+    .sticky-col {
+        position: sticky;
+        left: 0;
+        background-color: white;
+        z-index: 10;
+        border-right: 2px solid #dee2e6;
+        box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);
+    }
+
+    .sticky-col-2 {
+        position: sticky;
+        left: 200px;
+        background-color: white;
+        z-index: 10;
+        border-right: 2px solid #dee2e6;
+        box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);
+    }
+
+    thead .sticky-col,
+    thead .sticky-col-2 {
+        background-color: #f8f9fa !important;
+        z-index: 20;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .table-wrapper {
+        max-height: 600px;
+        overflow-x: auto;
+        overflow-y: auto;
+        border-radius: 8px;
+    }
+
+    .multiple-grades {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        justify-content: center;
+    }
+
+        .multiple-grades .grade-value {
+            margin: 1px;
+        }
+
+    .grade-pending {
+        opacity: 0.6;
+        border: 2px dashed #6c757d;
+    }
+    /* Стили для вкладок */
+    .nav-tabs .nav-link {
+        color: #495057;
+        font-weight: 500;
+        padding: 10px 20px;
+        border: none;
+        border-bottom: 3px solid transparent;
+    }
+
+        .nav-tabs .nav-link:hover {
+            border-bottom-color: #dee2e6;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #0d6efd;
+            background-color: transparent;
+            border-bottom-color: #0d6efd;
+            font-weight: 600;
+        }
+
+        .nav-tabs .nav-link i {
+            font-size: 1rem;
+        }
+</style>

@@ -1,0 +1,72 @@
+﻿@model MusicSchoolJournal.Models.AdminLayoutViewModel
+
+@{
+    var controllers = new[] { "Home", "Schedule", "Teachers", "Students", "Groups", "Subjects", "Offices", "LessonTimes", "Advertisements", "AcademicQuarters", "Profile" };
+    var icons = new Dictionary<string, string>
+            {
+                ["Home"] = "fas fa-home",
+                ["Schedule"] = "fas fa-calendar-alt",
+                ["Teachers"] = "fas fa-chalkboard-teacher",
+                ["Students"] = "fas fa-user-graduate",
+                ["Groups"] = "fas fa-users",
+                ["Subjects"] = "fas fa-book",
+                ["Offices"] = "fas fa-door-open",
+                ["LessonTimes"] = "fas fa-clock",
+                ["Advertisements"] = "fas fa-bullhorn",
+                ["AcademicQuarters"] = "fas fa-calendar-week",
+                ["Profile"] = "fas fa-user"
+            };
+
+    var displayNames = new Dictionary<string, string>
+            {
+                ["Home"] = "Главная",
+                ["Schedule"] = "Расписание",
+                ["Teachers"] = "Учителя",
+                ["Students"] = "Ученики",
+                ["Groups"] = "Группы",
+                ["Subjects"] = "Предметы",
+                ["Offices"] = "Кабинеты",
+                ["LessonTimes"] = "Учебные часы",
+                ["Advertisements"] = "Объявления",
+                ["AcademicQuarters"] = "Четверти",
+                ["Profile"] = "Личный кабинет"
+            };
+}
+
+<div class="col-md-4 col-lg-3 px-0 bg-light min-vh-100 border-end admin-sidebar">
+    <div class="p-3">
+        <div class="text-center mb-4">
+            <i class="fas fa-music fa-2x text-primary"></i>
+            <h5 class="mt-2">Музыкальная школа</h5>
+            <span class="badge bg-danger mt-1 admin-badge">Администратор</span>
+        </div>
+
+        <div class="nav flex-column nav-pills">
+            @foreach (var controller in controllers)
+            {
+                var isActive = Model.CurrentController == controller;
+                var icon = icons.ContainsKey(controller) ? icons[controller] : "fas fa-circle";
+                var displayName = displayNames.ContainsKey(controller) ? displayNames[controller] : controller;
+
+                <a class="nav-link @(isActive ? "active" : "text-dark")"
+                   asp-controller="@controller"
+                   asp-action="Index">
+                    <i class="@icon me-3"></i>@displayName
+                </a>
+            }
+        </div>
+
+        <hr class="my-3">
+
+        <div class="user-info mb-2">
+            <i class="fas fa-user-circle me-2 text-primary"></i>
+            <span class="fw-bold">@Model.FullName</span>
+        </div>
+
+        <form asp-controller="Account" asp-action="Logout" method="post">
+            <button type="submit" class="btn btn-outline-danger w-100">
+                <i class="fas fa-sign-out-alt me-2"></i>Выйти
+            </button>
+        </form>
+    </div>
+</div>

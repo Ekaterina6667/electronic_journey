@@ -1,0 +1,330 @@
+﻿@model IEnumerable<MusicSchoolJournal.Models.Schedule>
+
+@{
+    ViewData["Title"] = "Мое расписание";
+    var fullName = ViewBag.TeacherFullName ?? User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value ?? "Учитель";
+    var weekdays = new[] { "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье" };
+
+    // Группируем расписание по дням недели
+    var scheduleByDay = Model
+        .GroupBy(s => s.WeekdayId)
+        .OrderBy(g => g.Key)
+        .ToDictionary(g => g.Key, g => g.OrderBy(s => s.LessonTime?.LessonStart).ToList());
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Левое меню (ТОЧНО КАК НА ГЛАВНОЙ) -->
+        <div class="col-md-4 col-lg-3 px-0 bg-light min-vh-100 border-end admin-sidebar">
+            <div class="p-3">
+                <div class="text-center mb-3">
+                    <i class="fas fa-music fa-2x text-primary"></i>
+                    <h5 class="mt-1">Музыкальная школа</h5>
+                    <span class="badge bg-info mt-1 admin-badge">Учитель</span>
+                </div>
+
+                <div class="nav flex-column nav-pills">
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "text-dark")"
+                       asp-controller="Teacher" asp-action="Index">
+                        <i class="fas fa-home me-3"></i>Главная
+                    </a>
+                    <a class="nav-link py-2 active"
+                       asp-controller="Teacher" asp-action="Schedule">
+                        <i class="fas fa-calendar-alt me-3"></i>Расписание
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["action"]?.ToString() == "Grades" ? "active" : "text-dark")"
+                       asp-controller="Teacher" asp-action="Grades">
+                        <i class="fas fa-star me-3"></i>Оценки
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["action"]?.ToString() == "Homework" ? "active" : "text-dark")"
+                       asp-controller="Teacher" asp-action="Homework">
+                        <i class="fas fa-book me-3"></i>Домашние задания
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["action"]?.ToString() == "TeacherIndex" ? "active" : "text-dark")"
+                       asp-controller="Advertisements" asp-action="TeacherIndex">
+                        <i class="fas fa-bullhorn me-3"></i>Объявления
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["action"]?.ToString() == "Profile" ? "active" : "text-dark")"
+                       asp-controller="Teacher" asp-action="Profile">
+                        <i class="fas fa-user me-3"></i>Личный кабинет
+                    </a>
+                </div>
+
+                <hr class="my-2">
+
+                <div class="user-info mb-2 py-2">
+                    <i class="fas fa-user-circle me-2 text-primary"></i>
+                    <span class="fw-bold small">@fullName</span>
+                </div>
+
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    <button type="submit" class="btn btn-outline-danger w-100 py-2">
+                        <i class="fas fa-sign-out-alt me-2"></i>Выйти
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Правая часть (контент) -->
+        <div class="col-md-8 col-lg-9 p-4">
+            <!-- Приветствие -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-calendar-alt me-2 text-primary"></i>Моё расписание</h2>
+                <div class="text-muted">
+                    <i class="fas fa-calendar me-2"></i>@DateTime.Now.ToString("dd MMMM yyyy")
+                </div>
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>У вас пока нет занятий в расписании.
+                </div>
+            }
+            else
+            {
+                <!-- Дни недели по одному в строке -->
+                <div class="schedule-container">
+                    @foreach (var day in weekdays.Select((name, index) => new { Id = index + 1, Name = name }))
+                    {
+                        <div class="card schedule-card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0"><i class="fas fa-calendar-day me-2"></i>@day.Name</h5>
+                            </div>
+                            <div class="card-body">
+                                @if (scheduleByDay.ContainsKey(day.Id) && scheduleByDay[day.Id].Any())
+                                {
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th style="width: 150px;">Время</th>
+                                                    <th>Предмет</th>
+                                                    <th>Группа</th>
+                                                    <th style="width: 100px;">Кабинет</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var item in scheduleByDay[day.Id])
+                                                {
+                                                    <tr>
+                                                        <td class="align-middle">
+                                                            <span class="fw-bold">
+                                                                @item.LessonTime?.LessonStart.ToString(@"hh\:mm") - @item.LessonTime?.LessonEnd.ToString(@"hh\:mm")
+                                                            </span>
+                                                        </td>
+                                                        <td class="align-middle">@item.Subject?.SubjectName</td>
+                                                        <td class="align-middle">
+                                                            @item.Group?.GroupName
+                                                            @if (item.Group?.GroupMemberships != null)
+                                                            {
+                                                                <small class="text-muted d-block">
+                                                                    (@item.Group.GroupMemberships.Count уч.)
+                                                                </small>
+                                                            }
+                                                        </td>
+                                                        <td class="align-middle">
+                                                            <span class="badge bg-info">каб. @item.Room?.RoomNumber</span>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="text-muted text-center mb-0 py-3">
+                                        <i class="fas fa-calendar-times me-2"></i>Нет занятий
+                                    </p>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Стили для левой панели учителя - ТОЧНО КАК НА ГЛАВНОЙ */
+    .admin-sidebar {
+        min-width: 260px;
+    }
+
+        .admin-sidebar .nav-link {
+            border-radius: 8px;
+            margin-bottom: 2px;
+            transition: all 0.2s;
+            white-space: nowrap;
+            padding: 8px 12px;
+            font-size: 0.95rem;
+        }
+
+            .admin-sidebar .nav-link i {
+                width: 22px;
+                text-align: center;
+                font-size: 1rem;
+            }
+
+            .admin-sidebar .nav-link:hover:not(.active) {
+                background-color: #e9ecef;
+            }
+
+            .admin-sidebar .nav-link.active {
+                background-color: #0d6efd;
+                color: white !important;
+            }
+
+    .admin-badge {
+        font-size: 0.8rem !important;
+        padding: 4px 8px !important;
+        display: inline-block;
+    }
+
+    .user-info {
+        font-size: 0.9rem;
+        padding: 8px 10px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border-left: 3px solid #0d6efd;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .min-vh-100 {
+        min-height: 100vh;
+    }
+
+    /* Уменьшенные отступы - КАК НА ГЛАВНОЙ */
+    .py-2 {
+        padding-top: 0.4rem !important;
+        padding-bottom: 0.4rem !important;
+    }
+
+    .my-2 {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    .mb-2 {
+        margin-bottom: 0.5rem !important;
+    }
+
+    .mb-3 {
+        margin-bottom: 0.8rem !important;
+    }
+
+    hr {
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.3;
+    }
+
+    /* Стили для расписания */
+    .schedule-card {
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+        .schedule-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .schedule-card .card-header {
+            border-radius: 12px 12px 0 0;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #4361ee 0%, #3a56d4 100%);
+        }
+
+        .schedule-card .card-body {
+            padding: 20px;
+            background-color: #e9ecef;
+        }
+
+        .schedule-card table {
+            margin-bottom: 0;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .schedule-card th {
+            font-weight: 600;
+            color: #495057;
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .schedule-card td {
+            vertical-align: middle;
+            padding: 12px 8px;
+        }
+
+        .schedule-card tr:hover {
+            background-color: #f8f9fa;
+        }
+
+    .badge {
+        font-size: 0.85rem !important;
+        padding: 4px 8px !important;
+    }
+
+    /* Размеры колонок */
+    .col-md-4 {
+        flex: 0 0 auto;
+        width: 33.33333333%;
+    }
+
+    .col-lg-3 {
+        flex: 0 0 auto;
+        width: 25%;
+    }
+
+    .col-md-8 {
+        flex: 0 0 auto;
+        width: 66.66666667%;
+    }
+
+    .col-lg-9 {
+        flex: 0 0 auto;
+        width: 75%;
+    }
+
+    /* Для печати */
+    @@media print {
+        .admin-sidebar, .btn, form, hr {
+            display: none !important;
+        }
+
+        .col-md-4 {
+            display: none !important;
+        }
+
+        .col-md-8, .col-lg-9 {
+            width: 100% !important;
+            flex: 0 0 100% !important;
+            max-width: 100% !important;
+        }
+
+        .schedule-card {
+            break-inside: avoid;
+            box-shadow: none;
+            border: 1px solid #dee2e6;
+            margin-bottom: 15px;
+        }
+
+            .schedule-card .card-header {
+                background: #f8f9fa !important;
+                color: black !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+    }
+</style>

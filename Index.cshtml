@@ -1,0 +1,461 @@
+﻿@model IEnumerable<MusicSchoolJournal.Models.User>
+
+@{
+    ViewData["Title"] = "Управление учителями";
+
+    // Получаем полное имя из claims или используем значение по умолчанию
+    var fullName = User.FindFirst("FullName")?.Value ??
+                   User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value ??
+                   "Администратор";
+
+    var vicePrincipals = ViewBag.VicePrincipals as IEnumerable<MusicSchoolJournal.Models.User> ?? new List<MusicSchoolJournal.Models.User>();
+
+    // Получаем ID текущего администратора
+    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    int.TryParse(currentUserId, out int currentAdminId);
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Левое меню (ТОЧНО КАК НА ГЛАВНОЙ) -->
+        <div class="col-md-4 col-lg-3 px-0 bg-light min-vh-100 border-end admin-sidebar">
+            <div class="p-3">
+                <div class="text-center mb-3">
+                    <i class="fas fa-music fa-2x text-primary"></i>
+                    <h5 class="mt-1">Музыкальная школа</h5>
+                    <span class="badge bg-danger mt-1 admin-badge">Администратор</span>
+                </div>
+
+                <div class="nav flex-column nav-pills">
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "text-dark")"
+                       asp-controller="Home" asp-action="Index">
+                        <i class="fas fa-home me-3"></i>Главная
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Schedule" ? "active" : "text-dark")"
+                       asp-controller="Schedule" asp-action="Index">
+                        <i class="fas fa-calendar-alt me-3"></i>Расписание
+                    </a>
+                    <a class="nav-link py-2 active"
+                       asp-controller="Teachers" asp-action="Index">
+                        <i class="fas fa-chalkboard-teacher me-3"></i>Учителя
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Students" ? "active" : "text-dark")"
+                       asp-controller="Students" asp-action="Index">
+                        <i class="fas fa-user-graduate me-3"></i>Ученики
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Groups" ? "active" : "text-dark")"
+                       asp-controller="Groups" asp-action="Index">
+                        <i class="fas fa-users me-3"></i>Группы
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Subjects" ? "active" : "text-dark")"
+                       asp-controller="Subjects" asp-action="Index">
+                        <i class="fas fa-book me-3"></i>Предметы
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Offices" ? "active" : "text-dark")"
+                       asp-controller="Offices" asp-action="Index">
+                        <i class="fas fa-door-open me-3"></i>Кабинеты
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["controller"]?.ToString() == "LessonTimes" ? "active" : "text-dark")"
+                       asp-controller="LessonTimes" asp-action="Index">
+                        <i class="fas fa-clock me-3"></i>Учебные часы
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Advertisements" ? "active" : "text-dark")"
+                       asp-controller="Advertisements" asp-action="Index">
+                        <i class="fas fa-bullhorn me-3"></i>Объявления
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["controller"]?.ToString() == "AcademicQuarters" ? "active" : "text-dark")"
+                       asp-controller="AcademicQuarters" asp-action="Index">
+                        <i class="fas fa-calendar-week me-3"></i>Четверти
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Account" ? "active" : "text-dark")"
+                       asp-controller="Account" asp-action="Profile">
+                        <i class="fas fa-user me-3"></i>Личный кабинет
+                    </a>
+                </div>
+
+                <hr class="my-2">
+
+                <div class="user-info mb-2 py-2">
+                    <i class="fas fa-user-circle me-2 text-primary"></i>
+                    <span class="fw-bold small">Шамшурин Николай Анатольевич</span>
+                </div>
+
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    <button type="submit" class="btn btn-outline-danger w-100 py-2">
+                        <i class="fas fa-sign-out-alt me-2"></i>Выйти
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Правая часть (контент) -->
+        <div class="col-md-8 col-lg-9 p-4">
+            <!-- Заголовок и кнопки -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="page-title"><i class="fas fa-chalkboard-teacher me-2 text-primary"></i>Управление персоналом</h1>
+                <div class="d-flex gap-2">
+                    <a asp-action="Archived" class="btn btn-sm btn-info">
+                        <i class="fas fa-archive me-1"></i>Архив
+                    </a>
+                    <a asp-action="Create" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus me-1"></i>Добавить
+                    </a>
+                </div>
+            </div>
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show py-2 mb-3 position-relative" role="alert" id="successAlert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <span>@TempData["Success"]</span>
+                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close" style="position: relative; padding: 0.25rem;"></button>
+                    </div>
+                </div>
+            }
+
+            <!-- Вкладки -->
+            <ul class="nav nav-tabs mb-4" id="staffTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="teachers-tab" data-bs-toggle="tab" data-bs-target="#teachers" type="button" role="tab" aria-controls="teachers" aria-selected="true">
+                        <i class="fas fa-chalkboard-teacher me-2"></i>Учителя
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="viceprincipals-tab" data-bs-toggle="tab" data-bs-target="#viceprincipals" type="button" role="tab" aria-controls="viceprincipals" aria-selected="false">
+                        <i class="fas fa-user-tie me-2"></i>Завучи
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Содержимое вкладок -->
+            <div class="tab-content" id="staffTabsContent">
+                <!-- Вкладка Учителя -->
+                <div class="tab-pane fade show active" id="teachers" role="tabpanel" aria-labelledby="teachers-tab">
+                    @if (!Model.Any())
+                    {
+                        <div class="alert alert-info py-2 mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Список учителей пуст. Добавьте первого учителя!
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="card">
+                            <div class="card-body p-3">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>ФИО</th>
+                                                <th>Телефон</th>
+                                                <th>Email</th>
+                                                <th>Предметы</th>
+                                                <th>Логин</th>
+                                                <th class="text-end">Действия</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var teacher in Model)
+                                            {
+                                                <tr>
+                                                    <td class="align-middle">
+                                                        <strong>@teacher.LastName @teacher.FirstName @teacher.MiddleName</strong>
+                                                    </td>
+                                                    <td class="align-middle">@teacher.PhoneNumber</td>
+                                                    <td class="align-middle">@teacher.Email</td>
+                                                    <td class="align-middle">
+                                                        @if (teacher.TeacherSpecializations != null && teacher.TeacherSpecializations.Any())
+                                                        {
+                                                            var subjects = string.Join(", ", teacher.TeacherSpecializations.Select(ts => ts.Subject?.SubjectName));
+                                                            <span>@subjects</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted fst-italic">Не указаны</span>
+                                                        }
+                                                    </td>
+                                                    <td class="align-middle">@teacher.Login</td>
+                                                    <td class="text-end align-middle" style="white-space: nowrap;">
+                                                        <a asp-action="Edit" asp-route-id="@teacher.Id" class="btn btn-sm btn-warning me-1" title="Редактировать">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <form asp-action="Archive" asp-route-id="@teacher.Id" method="post" class="d-inline"
+                                                              onsubmit="return confirm('Переместить учителя @teacher.LastName @teacher.FirstName в архив?');">
+                                                            <button type="submit" class="btn btn-sm btn-secondary" title="В архив">
+                                                                <i class="fas fa-archive"></i>
+                                                            </button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Вкладка Завучи -->
+                <div class="tab-pane fade" id="viceprincipals" role="tabpanel" aria-labelledby="viceprincipals-tab">
+                    @{
+                        var allVicePrincipals = vicePrincipals.ToList();
+                        var currentAdmin = allVicePrincipals.FirstOrDefault(vp => vp.Id == currentAdminId);
+                        var otherVicePrincipals = allVicePrincipals.Where(vp => vp.Id != currentAdminId).ToList();
+                    }
+
+                    @if (!allVicePrincipals.Any())
+                    {
+                        <div class="alert alert-info py-2 mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Список завучей пуст.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="card">
+                            <div class="card-body p-3">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>ФИО</th>
+                                                <th>Телефон</th>
+                                                <th>Email</th>
+                                                <th>Логин</th>
+                                                <th class="text-end">Действия</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Сначала показываем текущего администратора -->
+                                            @if (currentAdmin != null)
+                                            {
+                                                <tr class="table-primary">
+                                                    <td class="align-middle">
+                                                        <strong>@currentAdmin.LastName @currentAdmin.FirstName @currentAdmin.MiddleName</strong>
+                                                        <span class="badge bg-primary ms-2">Это вы</span>
+                                                    </td>
+                                                    <td class="align-middle">@currentAdmin.PhoneNumber</td>
+                                                    <td class="align-middle">@currentAdmin.Email</td>
+                                                    <td class="align-middle">@currentAdmin.Login</td>
+                                                    <td class="text-end align-middle" style="white-space: nowrap;">
+                                                        <a asp-action="EditVicePrincipal" asp-route-id="@currentAdmin.Id" class="btn btn-sm btn-warning me-1" title="Редактировать">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <span class="text-muted" title="Нельзя архивировать себя">
+                                                            <button class="btn btn-sm btn-secondary" disabled>
+                                                                <i class="fas fa-archive"></i>
+                                                            </button>
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            }
+
+                                            <!-- Затем остальных завучей -->
+                                            @foreach (var vp in otherVicePrincipals)
+                                            {
+                                                <tr>
+                                                    <td class="align-middle">
+                                                        <strong>@vp.LastName @vp.FirstName @vp.MiddleName</strong>
+                                                    </td>
+                                                    <td class="align-middle">@vp.PhoneNumber</td>
+                                                    <td class="align-middle">@vp.Email</td>
+                                                    <td class="align-middle">@vp.Login</td>
+                                                    <td class="text-end align-middle" style="white-space: nowrap;">
+                                                        <a asp-action="EditVicePrincipal" asp-route-id="@vp.Id" class="btn btn-sm btn-warning me-1" title="Редактировать">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <form asp-action="Archive" asp-route-id="@vp.Id" method="post" class="d-inline"
+                                                              onsubmit="return confirm('Переместить завуча @vp.LastName @vp.FirstName в архив?');">
+                                                            <button type="submit" class="btn btn-sm btn-secondary" title="В архив">
+                                                                <i class="fas fa-archive"></i>
+                                                            </button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Автоматическое скрытие сообщений через 2 секунды
+        setTimeout(function () {
+            var successAlert = document.getElementById('successAlert');
+            if (successAlert) {
+                var bsAlert = new bootstrap.Alert(successAlert);
+                bsAlert.close();
+            }
+        }, 2000);
+    </script>
+}
+
+<style>
+    /* Стили для левой панели администратора - ТОЧНО КАК НА ГЛАВНОЙ */
+    .admin-sidebar {
+        min-width: 260px;
+    }
+
+        .admin-sidebar .nav-link {
+            border-radius: 8px;
+            margin-bottom: 2px;
+            transition: all 0.2s;
+            white-space: nowrap;
+            padding: 8px 12px;
+            font-size: 0.95rem;
+        }
+
+            .admin-sidebar .nav-link i {
+                width: 22px;
+                text-align: center;
+                font-size: 1rem;
+            }
+
+            .admin-sidebar .nav-link:hover:not(.active) {
+                background-color: #e9ecef;
+            }
+
+            .admin-sidebar .nav-link.active {
+                background-color: #0d6efd;
+                color: white !important;
+            }
+
+    .admin-badge {
+        font-size: 0.8rem !important;
+        padding: 4px 8px !important;
+        display: inline-block;
+    }
+
+    .user-info {
+        font-size: 0.9rem;
+        padding: 8px 10px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border-left: 3px solid #0d6efd;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .min-vh-100 {
+        min-height: 100vh;
+    }
+
+    /* Уменьшенные отступы - КАК НА ГЛАВНОЙ */
+    .mb-4 {
+        margin-bottom: 1rem !important;
+    }
+
+    .py-2 {
+        padding-top: 0.4rem !important;
+        padding-bottom: 0.4rem !important;
+    }
+
+    hr {
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Стили для правой части */
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 300;
+        margin-bottom: 0;
+    }
+
+    .table th, .table td {
+        padding: 0.6rem !important;
+        font-size: 0.95rem;
+    }
+
+    .btn-sm {
+        padding: 0.25rem 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    .btn-primary, .btn-info, .btn-outline-danger {
+        padding: 0.4rem 1rem;
+        font-size: 0.95rem;
+    }
+
+    /* Стили для вкладок */
+    .nav-tabs {
+        border-bottom: 2px solid #dee2e6;
+    }
+
+        .nav-tabs .nav-link {
+            border: none;
+            color: #495057;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.95rem;
+            border-radius: 8px 8px 0 0;
+            margin-right: 4px;
+            transition: all 0.2s;
+        }
+
+            .nav-tabs .nav-link i {
+                color: #6c757d;
+            }
+
+            .nav-tabs .nav-link:hover {
+                background-color: #f8f9fa;
+                border: none;
+                color: #0d6efd;
+            }
+
+                .nav-tabs .nav-link:hover i {
+                    color: #0d6efd;
+                }
+
+            .nav-tabs .nav-link.active {
+                background-color: #e9ecef;
+                color: #0d6efd;
+                font-weight: 500;
+                border: none;
+                border-bottom: 3px solid #0d6efd;
+            }
+
+                .nav-tabs .nav-link.active i {
+                    color: #0d6efd;
+                }
+
+    /* Выделение текущего пользователя */
+    .table-primary {
+        background-color: #cfe2ff !important;
+    }
+
+        .table-primary td {
+            background-color: #cfe2ff !important;
+        }
+
+    /* Размеры колонок */
+    .col-md-4 {
+        flex: 0 0 auto;
+        width: 33.33333333%;
+    }
+
+    .col-lg-3 {
+        flex: 0 0 auto;
+        width: 25%;
+    }
+
+    .col-md-8 {
+        flex: 0 0 auto;
+        width: 66.66666667%;
+    }
+
+    .col-lg-9 {
+        flex: 0 0 auto;
+        width: 75%;
+    }
+</style>

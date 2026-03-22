@@ -1,0 +1,289 @@
+﻿@model MusicSchoolJournal.Models.User
+
+@{
+    ViewData["Title"] = "Редактирование завуча";
+    var fullName = $"{Model.LastName} {Model.FirstName} {Model.MiddleName}".Trim();
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Левое меню (как у администратора) -->
+        <div class="col-md-4 col-lg-3 px-0 bg-light min-vh-100 border-end admin-sidebar">
+            <div class="p-3">
+                <div class="text-center mb-3">
+                    <i class="fas fa-music fa-2x text-primary"></i>
+                    <h5 class="mt-1">Музыкальная школа</h5>
+                    <span class="badge bg-danger mt-1 admin-badge">Администратор</span>
+                </div>
+
+                <div class="nav flex-column nav-pills">
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "text-dark")"
+                       asp-controller="Home" asp-action="Index">
+                        <i class="fas fa-home me-3"></i>Главная
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Schedule" ? "active" : "text-dark")"
+                       asp-controller="Schedule" asp-action="Index">
+                        <i class="fas fa-calendar-alt me-3"></i>Расписание
+                    </a>
+                    <a class="nav-link py-2 active"
+                       asp-controller="Teachers" asp-action="Index">
+                        <i class="fas fa-chalkboard-teacher me-3"></i>Учителя
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Students" ? "active" : "text-dark")"
+                       asp-controller="Students" asp-action="Index">
+                        <i class="fas fa-user-graduate me-3"></i>Ученики
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Groups" ? "active" : "text-dark")"
+                       asp-controller="Groups" asp-action="Index">
+                        <i class="fas fa-users me-3"></i>Группы
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Subjects" ? "active" : "text-dark")"
+                       asp-controller="Subjects" asp-action="Index">
+                        <i class="fas fa-book me-3"></i>Предметы
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Offices" ? "active" : "text-dark")"
+                       asp-controller="Offices" asp-action="Index">
+                        <i class="fas fa-door-open me-3"></i>Кабинеты
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["controller"]?.ToString() == "LessonTimes" ? "active" : "text-dark")"
+                       asp-controller="LessonTimes" asp-action="Index">
+                        <i class="fas fa-clock me-3"></i>Учебные часы
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Advertisements" ? "active" : "text-dark")"
+                       asp-controller="Advertisements" asp-action="Index">
+                        <i class="fas fa-bullhorn me-3"></i>Объявления
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["controller"]?.ToString() == "AcademicQuarters" ? "active" : "text-dark")"
+                       asp-controller="AcademicQuarters" asp-action="Index">
+                        <i class="fas fa-calendar-week me-3"></i>Четверти
+                    </a>
+                    <a class="nav-link py-2 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Account" ? "active" : "text-dark")"
+                       asp-controller="Account" asp-action="Profile">
+                        <i class="fas fa-user me-3"></i>Личный кабинет
+                    </a>
+                </div>
+
+                <hr class="my-2">
+
+                <div class="user-info mb-2 py-2">
+                    <i class="fas fa-user-circle me-2 text-primary"></i>
+                    <span class="fw-bold small">@fullName</span>
+                </div>
+
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    <button type="submit" class="btn btn-outline-danger w-100 py-2">
+                        <i class="fas fa-sign-out-alt me-2"></i>Выйти
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Правая часть (контент) -->
+        <div class="col-md-8 col-lg-9 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-user-edit me-2 text-primary"></i>Редактирование завуча</h2>
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Назад к списку
+                </a>
+            </div>
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show py-2 mb-3" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <div class="card card-gray">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="fas fa-address-card me-2 text-primary"></i>Контактная информация</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="EditVicePrincipal" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="RoleId" />
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="LastName" class="form-label">Фамилия</label>
+                                <input asp-for="LastName" class="form-control" value="@Model.LastName" required />
+                                <span asp-validation-for="LastName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="FirstName" class="form-label">Имя</label>
+                                <input asp-for="FirstName" class="form-control" value="@Model.FirstName" required />
+                                <span asp-validation-for="FirstName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="MiddleName" class="form-label">Отчество</label>
+                                <input asp-for="MiddleName" class="form-control" value="@Model.MiddleName" />
+                                <span asp-validation-for="MiddleName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PhoneNumber" class="form-label">Телефон</label>
+                                <input asp-for="PhoneNumber" class="form-control" value="@Model.PhoneNumber" required />
+                                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Email" class="form-label">Email</label>
+                                <input asp-for="Email" class="form-control" type="email" value="@Model.Email" required />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Login" class="form-label">Логин</label>
+                                <input asp-for="Login" class="form-control" value="@Model.Login" required />
+                                <span asp-validation-for="Login" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PasswordHash" class="form-label">Новый пароль</label>
+                                <input asp-for="PasswordHash" class="form-control" type="password" placeholder="Оставьте пустым, если не хотите менять" />
+                                <span asp-validation-for="PasswordHash" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Роль:</strong> Завуч (Администратор)
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Сохранить изменения
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
+
+<style>
+    .admin-sidebar {
+        min-width: 260px;
+    }
+
+        .admin-sidebar .nav-link {
+            border-radius: 8px;
+            margin-bottom: 2px;
+            transition: all 0.2s;
+            white-space: nowrap;
+            padding: 8px 12px;
+            font-size: 0.95rem;
+        }
+
+            .admin-sidebar .nav-link i {
+                width: 22px;
+                text-align: center;
+                font-size: 1rem;
+            }
+
+            .admin-sidebar .nav-link:hover:not(.active) {
+                background-color: #e9ecef;
+            }
+
+            .admin-sidebar .nav-link.active {
+                background-color: #0d6efd;
+                color: white !important;
+            }
+
+    .admin-badge {
+        font-size: 0.8rem !important;
+        padding: 4px 8px !important;
+        display: inline-block;
+    }
+
+    .user-info {
+        font-size: 0.9rem;
+        padding: 8px 10px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border-left: 3px solid #0d6efd;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .min-vh-100 {
+        min-height: 100vh;
+    }
+
+    .card-gray {
+        background-color: #e9ecef !important;
+        border: none;
+        border-radius: 12px;
+    }
+
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .card-header {
+        background-color: white;
+        border-bottom: 1px solid #dee2e6;
+        padding: 15px 20px;
+    }
+
+    .form-label {
+        font-weight: 500;
+    }
+
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 8px 12px;
+    }
+
+    .py-2 {
+        padding-top: 0.4rem !important;
+        padding-bottom: 0.4rem !important;
+    }
+
+    .my-2 {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    hr {
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.3;
+    }
+
+    .col-md-4 {
+        flex: 0 0 auto;
+        width: 33.33333333%;
+    }
+
+    .col-lg-3 {
+        flex: 0 0 auto;
+        width: 25%;
+    }
+
+    .col-md-8 {
+        flex: 0 0 auto;
+        width: 66.66666667%;
+    }
+
+    .col-lg-9 {
+        flex: 0 0 auto;
+        width: 75%;
+    }
+</style>
